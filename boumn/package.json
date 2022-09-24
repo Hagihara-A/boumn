@@ -11,11 +11,13 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@types/micromatch": "^4.0.2",
     "@types/node": "^18.7.18",
     "@typescript-eslint/eslint-plugin": "^5.38.0",
     "@typescript-eslint/parser": "^5.38.0",
     "eslint": "^8.23.1",
     "eslint-plugin-simple-import-sort": "^8.0.0",
+    "micromatch": "^4.0.5",
     "prettier": "^2.7.1",
     "ts-node": "^10.9.1",
     "turbo": "^1.5.1",
