@@ -7,6 +7,7 @@ import {
   getPackageData,
   getPnpmWsGlob,
   getYarnWsGlob,
+  PackageData,
 } from "./getWsInfo.js";
 import { AbsPath, getCwd } from "./path.js";
 

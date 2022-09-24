@@ -76,14 +76,8 @@ export const tryReadManifest = (
 export const glob = (
   cwd: AbsPath,
   patterns: string[]
-): AppTaskEither<AbsPath[]> =>
-  TE.tryCatch(
-    () =>
-      globM(patterns, { cwd: cwd.path }).then((paths) =>
-        ARR.map((path: string) => concatPath(cwd, path))(paths)
-      ),
-    matchError
-  );
+): AppTaskEither<string[]> =>
+  TE.tryCatch(() => globM(patterns, { cwd: cwd.path }), matchError);
 
 export const readPnpmWsYaml = (yamlPath: AbsPath): AppTaskEither<PnpmWsYaml> =>
   FN.pipe(

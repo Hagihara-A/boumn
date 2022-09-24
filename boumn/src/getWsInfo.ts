@@ -1,6 +1,6 @@
 import * as pathM from "path";
 
-import { FN, ORD, REC, SET, STR, TE } from "./fp.js";
+import { ARR, FN, ORD, REC, SET, STR, TE } from "./fp.js";
 import { glob, readManifest, readPnpmWsYaml } from "./fs/fs.js";
 import { AppTaskEither } from "./index.js";
 import { RawManifest } from "./parser/main.js";
@@ -61,14 +61,22 @@ export const getAllWsPkgPaths = (
   cwd: AbsPath,
   patterns: WsGlob
 ): AppTaskEither<AbsPath[]> =>
-  glob(
-    cwd,
-    FN.pipe(
-      patterns,
-      SET.map(STR.Eq)((pattern: string) =>
-        pathM.join(pattern, manifestFileName)
-      ),
-      SET.toArray(STR.Ord)
+  FN.pipe(
+    TE.Do,
+    TE.bind("relativePkgPath", () =>
+      glob(
+        cwd,
+        FN.pipe(
+          patterns,
+          SET.map(STR.Eq)((pattern: string) =>
+            pathM.join(pattern, manifestFileName)
+          ),
+          SET.toArray(STR.Ord)
+        )
+      )
+    ),
+    TE.map(({ relativePkgPath }) =>
+      ARR.map((rpath: string) => concatPath(cwd, rpath))(relativePkgPath)
     )
   );
 
