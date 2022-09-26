@@ -21,14 +21,13 @@ export const readFilesInDir = (absPath: AbsPath) =>
     readDir(absPath)
   );
 
-export const readFoldersinDir = (absPath: AbsPath) =>
-  TE.map<Dirent[], Dirent[]>((ents) => ents.filter((ent) => ent.isDirectory()))(
-    readDir(absPath)
-  );
+export const readFoldersInDir = (absPath: AbsPath): AppTaskEither<Dirent[]> =>
+  FN.pipe(absPath, readDir, TE.map(ARR.filter((ent) => ent.isDirectory())));
 
 export const readFile = ({ path }: AbsPath): AppTaskEither<string> =>
   TE.tryCatch(() => fs.readFile(path, { encoding: "utf-8" }), matchError);
 
+const encoding = "utf-8";
 /**
  * dont throw an error if file doesnt exist
  */
@@ -38,7 +37,7 @@ export const tryReadFile = ({
   TE.tryCatch(
     () =>
       fs
-        .readFile(path, { encoding: "utf-8" })
+        .readFile(path, { encoding })
         .then((str) => OP.some(str))
         .catch((err) => {
           if (isNodeError(err) && err.code === "ENOENT") {
@@ -49,22 +48,20 @@ export const tryReadFile = ({
     matchError
   );
 
-export const readManifest = (manPath: AbsPath): AppTaskEither<RawManifest> =>
+export const readManifest = (
+  manifestPath: AbsPath
+): AppTaskEither<RawManifest> =>
   FN.pipe(
-    TE.Do,
-    TE.bind("manifestStr", () => readFile(manPath)),
-    TE.chain(({ manifestStr }) =>
-      TE.fromEither(parseManifestString(manifestStr))
-    )
+    readFile(manifestPath),
+    TE.chain((manifestStr) => TE.fromEither(parseManifestString(manifestStr)))
   );
 
 export const tryReadManifest = (
   dir: AbsPath
 ): AppTaskEither<OP.Option<RawManifest>> =>
   FN.pipe(
-    TE.Do,
-    TE.bind("maybeManifestStr", () => tryReadFile(deriveManifestPath(dir))),
-    TE.chain(({ maybeManifestStr }) =>
+    tryReadFile(manifestPath(dir)),
+    TE.chain((maybeManifestStr) =>
       OP.isNone(maybeManifestStr)
         ? TE.of(OP.none)
         : TE.map<RawManifest, OP.Option<RawManifest>>(OP.some)(
@@ -81,9 +78,8 @@ export const glob = (
 
 export const readPnpmWsYaml = (yamlPath: AbsPath): AppTaskEither<PnpmWsYaml> =>
   FN.pipe(
-    TE.Do,
-    TE.bind("yamlStr", () => readFile(yamlPath)),
-    TE.chain(({ yamlStr }) => TE.fromEither(parsePnpmWsYaml(yamlStr)))
+    readFile(yamlPath),
+    TE.chain((yamlStr) => TE.fromEither(parsePnpmWsYaml(yamlStr)))
   );
 
 export const copy = (

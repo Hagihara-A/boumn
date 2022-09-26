@@ -38,23 +38,18 @@ const isWsRoot = (dir: AbsPath): AppTaskEither<WsJudgeStatus> =>
 
 const isYarnWsRootDir = (absPath: AbsPath): AppTaskEither<boolean> =>
   FN.pipe(
-    TE.Do,
-    TE.bind("manifest", () => tryReadManifest(absPath)),
-    TE.map(({ manifest }) =>
-      OP.isNone(manifest) ? false : isYarnWsRootManifest(manifest.value)
+    tryReadManifest(absPath),
+    TE.map((maybeManifest) =>
+      OP.isNone(maybeManifest)
+        ? false
+        : isYarnWsRootManifest(maybeManifest.value)
     )
   );
 
-const pnpmWsRegep = /^pnpm-workspace.ya?ml$/;
-
 const isPnpmWsRootDir = (absPath: AbsPath): AppTaskEither<boolean> =>
   FN.pipe(
-    TE.Do,
-    TE.bind("fileEntries", () => readFilesInDir(absPath)),
-    TE.map(
-      ({ fileEntries }) =>
-        fileEntries.find((ent) => pnpmWsRegep.test(ent.name)) !== undefined
-    )
+    readFilesInDir(absPath),
+    TE.map(ARR.some((ent) => isPnpmWsYamlPath(ent.name)))
   );
 
 const isYarnWsRootManifest = (manifest: RawManifest) =>

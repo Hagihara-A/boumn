@@ -84,9 +84,8 @@ export const getPackageData = (
   manifestPath: AbsPath
 ): AppTaskEither<PackageData> =>
   FN.pipe(
-    TE.Do,
-    TE.bind("rawManifest", () => readManifest(manifestPath)),
-    TE.map(({ rawManifest }) =>
+    readManifest(manifestPath),
+    TE.map((rawManifest) =>
       derivePackageData(parentDir(manifestPath), rawManifest)
     )
   );
