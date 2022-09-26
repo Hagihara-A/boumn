@@ -16,11 +16,6 @@ export const AbsPath = (path: string): AbsPath => ({
   path,
 });
 
-type RelativePath = {
-  __tag: "relativePath";
-  path: string;
-};
-
 export const concatPath = ({ path: base }: AbsPath, child: string): AbsPath =>
   AbsPath(pathM.join(base, child));
 
@@ -32,10 +27,17 @@ export const isRootDir = ({ path }: AbsPath): boolean =>
 export const parentDir = ({ path }: AbsPath): AbsPath =>
   AbsPath(pathM.dirname(path));
 
-export const deriveManifestPath = (dir: AbsPath): AbsPath =>
+export const manifestPath = (dir: AbsPath): AbsPath =>
   concatPath(dir, manifestFileName);
-export const derivePnpmWsYamlPath = (dir: AbsPath): AbsPath =>
+
+export const isManifestPath = (path: string): boolean =>
+  STR.includes(manifestFileName)(path);
+
+export const pnpmWsYamlPath = (dir: AbsPath): AbsPath =>
   concatPath(dir, pnpmWsYamlFileName);
+
+export const isPnpmWsYamlPath = (path: string): boolean =>
+  STR.includes(pnpmWsYamlFileName)(path);
 
 export const EqAbsPath: EQ.Eq<AbsPath> = EQ.contramap<string, AbsPath>(
   ({ path }) => path
