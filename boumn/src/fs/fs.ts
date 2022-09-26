@@ -11,7 +11,7 @@ import {
   PnpmWsYaml,
   RawManifest,
 } from "../parser/main.js";
-import { AbsPath, concatPath, deriveManifestPath } from "../path.js";
+import { AbsPath, manifestPath } from "../path.js";
 
 export const readDir = ({ path }: AbsPath): AppTaskEither<Dirent[]> =>
   TE.tryCatch(() => fs.readdir(path, { withFileTypes: true }), matchError);
@@ -86,3 +86,8 @@ export const copy = (
   { path: from }: AbsPath,
   { path: to }: AbsPath
 ): AppTaskEither<void> => TE.tryCatch(() => fs.copyFile(from, to), matchError);
+
+export const writeFile =
+  ({ path }: AbsPath) =>
+  (str: string): AppTaskEither<void> =>
+    TE.tryCatch(() => fs.writeFile(path, str, { encoding }), matchError);
