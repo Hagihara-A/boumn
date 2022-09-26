@@ -1,5 +1,5 @@
-import { describe, expect, test } from "vitest";
 import mm from "micromatch";
+import { describe, expect, test } from "vitest";
 
 import {
   defaultIncludeFiles,
@@ -12,7 +12,7 @@ import { AbsPath } from "./path";
 describe(`${enumDependentPkgs.name}`, () => {
   test("Can enum when cyclic dependency", () => {
     const path = AbsPath("dummy");
-    const files = new Set([]);
+    const files = [];
     const makePkg = (name: string, localDepName: string[]): PackageData => ({
       path,
       name,

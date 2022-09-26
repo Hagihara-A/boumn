@@ -1,27 +1,26 @@
-import * as pathM from "path";
-
 import { ARR, FN, ORD, REC, SET, STR, TE } from "./fp.js";
 import { glob, readManifest, readPnpmWsYaml } from "./fs/fs.js";
 import { AppTaskEither } from "./index.js";
 import { RawManifest } from "./parser/main.js";
-import { AbsPath, concatPath, manifestFileName, parentDir } from "./path.js";
+import {
+  AbsPath,
+  concatPath,
+  manifestFileName,
+  manifestPath,
+  parentDir,
+  pnpmWsYamlPath,
+} from "./path.js";
 
 export const getYarnWsGlob = (wsRootDir: AbsPath): AppTaskEither<WsGlob> =>
   FN.pipe(
-    TE.Do,
-    TE.bind("yarnWsRootManifest", () => readManifest(wsRootDir)),
-    TE.map(
-      ({ yarnWsRootManifest }) => new Set(yarnWsRootManifest.workspaces ?? [])
-    )
+    readManifest(manifestPath(wsRootDir)),
+    TE.map(({ workspaces = [] }) => workspaces)
   );
 
 export const getPnpmWsGlob = (wsRootDir: AbsPath): AppTaskEither<WsGlob> =>
   FN.pipe(
-    TE.Do,
-    TE.bind("pnpmWsYaml", () =>
-      readPnpmWsYaml(concatPath(wsRootDir, "pnpm-workspace.yaml"))
-    ),
-    TE.map(({ pnpmWsYaml }) => new Set(pnpmWsYaml.packages ?? []))
+    readPnpmWsYaml(pnpmWsYamlPath(wsRootDir)),
+    TE.map(({ packages = [] }) => packages)
   );
 
 export const enumDependentPkgs =
@@ -52,32 +51,18 @@ export type PackageData = {
   name: string;
   path: AbsPath;
   localDepName: DepName;
-  files: Set<string>;
+  files: string[];
 };
 
-export type WsGlob = Set<string>;
+export type WsGlob = string[];
 
 export const getAllWsPkgPaths = (
   cwd: AbsPath,
   patterns: WsGlob
 ): AppTaskEither<AbsPath[]> =>
   FN.pipe(
-    TE.Do,
-    TE.bind("relativePkgPath", () =>
-      glob(
-        cwd,
-        FN.pipe(
-          patterns,
-          SET.map(STR.Eq)((pattern: string) =>
-            pathM.join(pattern, manifestFileName)
-          ),
-          SET.toArray(STR.Ord)
-        )
-      )
-    ),
-    TE.map(({ relativePkgPath }) =>
-      ARR.map((rpath: string) => concatPath(cwd, rpath))(relativePkgPath)
-    )
+    glob(cwd, patterns),
+    TE.map(ARR.map((rpath: string) => concatPath(cwd, rpath)))
   );
 
 export const getPackageData = (
@@ -105,13 +90,9 @@ const derivePackageData = (
     rawManifest.dependencies ?? {},
     REC.filter(isWsProtocol),
     Object.keys,
-    (pkgNames) => new Set(pkgNames)
+    SET.fromArray(STR.Eq)
   ),
-  files: FN.pipe(
-    rawManifest.files ?? [],
-    SET.fromArray(STR.Eq),
-    SET.union(STR.Eq)(SET.fromArray(STR.Eq)(defaultIncludeFiles))
-  ),
+  files: FN.pipe(rawManifest.files ?? [], ARR.concat(defaultIncludeFiles)),
   path: pkgDir,
 });
 
