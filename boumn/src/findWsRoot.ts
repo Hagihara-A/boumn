@@ -1,23 +1,29 @@
-import { FN, OP, TE } from "./fp.js";
+import { ARR, FN, OP, TE } from "./fp.js";
 import { readFilesInDir, tryReadManifest } from "./fs/fs.js";
 import { AppTaskEither } from "./index.js";
 import { RawManifest } from "./parser/main.js";
-import { AbsPath, isRootDir, parentDir } from "./path.js";
+import {
+  AbsPath,
+  isPnpmWsYamlPath,
+  isRootDir,
+  parentDir,
+} from "./path.js";
 
-type WsJudgeStatus = "pnpm" | "yarn" | "notRoot";
+type PMType = "pnpm" | "yarn";
+type NotRoot = "notRoot";
+type WsJudgeStatus = PMType | NotRoot;
 type WsRootData = {
-  type: Extract<WsJudgeStatus, "pnpm" | "yarn">;
+  type: PMType;
   path: AbsPath;
 };
 
 export const findWsRoot = (cwd: AbsPath): AppTaskEither<WsRootData> =>
   FN.pipe(
-    TE.Do,
-    TE.bind("isRoot", () => isWsRoot(cwd)),
-    TE.chain(({ isRoot }) =>
-      isRoot === "pnpm" || isRoot === "yarn"
+    isWsRoot(cwd),
+    TE.chain((pmType) =>
+      pmType === "pnpm" || pmType === "yarn"
         ? TE.right({
-            type: isRoot,
+            type: pmType,
             path: cwd,
           })
         : isRootDir(cwd)
