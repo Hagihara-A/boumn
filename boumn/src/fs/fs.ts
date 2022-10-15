@@ -82,7 +82,20 @@ export const readPnpmWsYaml = (yamlPath: AbsPath): AppTaskEither<PnpmWsYaml> =>
     TE.chain((yamlStr) => TE.fromEither(parsePnpmWsYaml(yamlStr)))
   );
 
-export const copy = (
+export type Transform = (content: string) => AppEither<string>;
+
+export const transformFile = (
+  from: AbsPath,
+  to: AbsPath,
+  transform: Transform
+) =>
+  FN.pipe(
+    TE.Do,
+    TE.bind("content", () => readFile(from)),
+    TE.bind("contentT", ({ content }) => TE.fromEither(transform(content))),
+    TE.chain(({ contentT }) => writeFile(to)(contentT))
+  );
+
   { path: from }: AbsPath,
   { path: to }: AbsPath
 ): AppTaskEither<void> => TE.tryCatch(() => fs.copyFile(from, to), matchError);
