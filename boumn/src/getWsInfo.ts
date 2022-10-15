@@ -1,4 +1,4 @@
-import { ARR, FN, ORD, REC, SET, STR, TE } from "./fp.js";
+import { ARR, E, EQ, FN, REC, SET, STR, TE } from "./fp.js";
 import { glob, readManifest, readPnpmWsYaml } from "./fs/fs.js";
 import { AppTaskEither } from "./index.js";
 import { RawManifest } from "./parser/main.js";
@@ -24,25 +24,22 @@ export const getPnpmWsGlob = (wsRootDir: AbsPath): AppTaskEither<WsGlob> =>
   );
 
 export const enumDependentPkgs =
-  (ord: ORD.Ord<PackageData>) =>
-  (candidates: Set<PackageData>) =>
-  (root: PackageData): Set<PackageData> => {
-    const directDeps = SET.filter((pkg: PackageData) =>
-      root.localDepName.has(pkg.name)
+  (eq: EQ.Eq<PackageData>) =>
+  (candidates: PackageData[]) =>
+  (root: PackageData): PackageData[] => {
+    const { left: leftCandidates, right: directDeps } = ARR.partition(
+      (pkg: PackageData) => root.localDepName.has(pkg.name)
     )(candidates);
 
-    if (SET.isEmpty(directDeps)) {
-      return SET.empty;
+    if (ARR.isEmpty(directDeps)) {
+      return [];
     }
-    const leftCandidates = SET.difference(ord)(directDeps)(candidates);
 
-    const indirectDeps = SET.reduce(ord)(
-      SET.empty,
-      (acc: Set<PackageData>, a) =>
-        SET.union(ord)(enumDependentPkgs(ord)(leftCandidates)(a))(acc)
+    const indirectDeps = ARR.reduce([], (acc: PackageData[], a: PackageData) =>
+      ARR.union(eq)(enumDependentPkgs(eq)(leftCandidates)(a))(acc)
     )(directDeps);
 
-    return SET.union(ord)(indirectDeps)(directDeps);
+    return ARR.union(eq)(indirectDeps)(directDeps);
   };
 
 type DepName = Set<string>;
@@ -98,6 +95,6 @@ const derivePackageData = (
 
 const isWsProtocol = (str: string) => /^workspace:.+$/.test(str);
 
-export const ordPkg: ORD.Ord<PackageData> = ORD.contramap(
+export const eqPkg: EQ.Eq<PackageData> = EQ.contramap(
   (pkg: PackageData) => pkg.name
-)(STR.Ord);
+)(STR.Eq);

@@ -4,7 +4,7 @@ import { describe, expect, test } from "vitest";
 import {
   defaultIncludeFiles,
   enumDependentPkgs,
-  ordPkg,
+  eqPkg,
   PackageData,
 } from "./getWsInfo";
 import { AbsPath } from "./path";
@@ -38,10 +38,8 @@ describe(`${enumDependentPkgs.name}`, () => {
     const Y = makePkg("Y", ["Z"]);
     const Z = makePkg("Z", ["X"]);
 
-    const actual = enumDependentPkgs(ordPkg)(new Set([B, C, D, E, F, X, Y, Z]))(
-      A
-    );
-    const expected = new Set([B, C, D, E, F]);
+    const actual = enumDependentPkgs(eqPkg)([B, C, D, E, F, X, Y, Z])(A);
+    const expected = [B, C, D, E, F];
 
     expect(actual).toEqual(expected);
   });
