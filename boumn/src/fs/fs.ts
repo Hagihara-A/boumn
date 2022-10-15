@@ -87,6 +87,12 @@ export const copy = (
   { path: to }: AbsPath
 ): AppTaskEither<void> => TE.tryCatch(() => fs.copyFile(from, to), matchError);
 
+export const ensureDir = (dir: AbsPath): AppTaskEither<void> =>
+  TE.tryCatch(
+    () => fs.mkdir(dir.path, { recursive: true }).then(() => undefined),
+    matchError
+  );
+
 export const writeFile =
   ({ path }: AbsPath) =>
   (str: string): AppTaskEither<void> =>
