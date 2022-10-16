@@ -9,10 +9,9 @@ importers:
       ts-node: ^10.9.1
       turbo: ^1.5.1
       typescript: ^4.8.3
-    dependencies:
-      boumn: link:boumn
     devDependencies:
       '@types/node': 18.7.18
+      boumn: link:boumn
       ts-node: 10.9.1_bidgzm5cq2du6gnjtweqqjrrn4
       turbo: 1.5.1
       typescript: 4.8.3
@@ -27,23 +26,23 @@ importers:
       error: workspace:*
       eslint: ^8.23.1
       eslint-plugin-simple-import-sort: ^8.0.0
-      fast-glob: ^3.2.12
-      fp-ts: ^2.12.3
-      io-ts: ^2.2.18
+      fp: workspace:^1.0.0
+      fp-fs: workspace:^
+      fp-parse: workspace:^
+      fp-path: workspace:^
       micromatch: ^4.0.5
       prettier: ^2.7.1
       ts-node: ^10.9.1
       turbo: ^1.5.1
       typescript: ^4.8.3
       vitest: ^0.23.2
-      yaml: ^2.1.1
     dependencies:
       commander: 9.4.1
       error: link:../libs/error
-      fast-glob: 3.2.12
-      fp-ts: 2.12.3
-      io-ts: 2.2.18_fp-ts@2.12.3
-      yaml: 2.1.1
+      fp: link:../libs/fp
+      fp-fs: link:../libs/fp-fs
+      fp-parse: link:../libs/fp-parse
+      fp-path: link:../libs/fp-path
     devDependencies:
       '@types/micromatch': 4.0.2
       '@types/node': 18.7.18
@@ -62,6 +61,62 @@ importers:
     specifiers:
       fp-ts: ^2.12.3
       typescript: ^4.8.3
+    devDependencies:
+      fp-ts: 2.12.3
+      typescript: 4.8.3
+
+  libs/fp:
+    specifiers:
+      error: workspace:^
+      fp-ts: ^2.12.3
+      typescript: ^4.8.3
+    dependencies:
+      error: link:../error
+    devDependencies:
+      fp-ts: 2.12.3
+      typescript: 4.8.3
+
+  libs/fp-fs:
+    specifiers:
+      error: workspace:*
+      fast-glob: ^3.2.12
+      fp: workspace:*
+      fp-parse: workspace:*
+      fp-path: workspace:*
+      fp-ts: ^2.12.3
+      typescript: ^4.8.3
+    dependencies:
+      error: link:../error
+      fast-glob: 3.2.12
+      fp: link:../fp
+      fp-parse: link:../fp-parse
+      fp-path: link:../fp-path
+    devDependencies:
+      fp-ts: 2.12.3
+      typescript: 4.8.3
+
+  libs/fp-parse:
+    specifiers:
+      error: workspace:*
+      fp: workspace:*
+      fp-ts: ^2.12.3
+      typescript: ^4.8.3
+      yaml: ^2.1.1
+    dependencies:
+      error: link:../error
+      fp: link:../fp
+      yaml: 2.1.1
+    devDependencies:
+      fp-ts: 2.12.3
+      typescript: 4.8.3
+
+  libs/fp-path:
+    specifiers:
+      fp: workspace:*
+      fp-ts: ^2.12.3
+      typescript: ^4.8.3
+    dependencies:
+      fp: link:../fp
     devDependencies:
       fp-ts: 2.12.3
       typescript: 4.8.3
@@ -914,6 +969,7 @@ packages:
 
   /fp-ts/2.12.3:
     resolution: {integrity: sha512-8m0XvW8kZbfnJOA4NvSVXu95mLbPf4LQGwQyqVukIYS4KzSNJiyKSmuZUmbVHteUi6MGkAJGPb0goPZqI+Tsqg==}
+    dev: true
 
   /fs.realpath/1.0.0:
     resolution: {integrity: sha512-OO0pH2lK6a0hZnAdau5ItzHPI6pUlvI7jMVnxUQRtw4owF2wk8lOSabtGDCTP4Ggrg2MbGnWO9X8K1t4+fGMDw==}
@@ -1022,14 +1078,6 @@ packages:
   /inherits/2.0.4:
     resolution: {integrity: sha512-k/vGaX4/Yla3WzyMCvTQOXYeIHvqOKtnqBduzTHpzpQZzAskKMhZ2K+EnBiSM9zGSoIFeMpXKxa4dYeZIQqewQ==}
     dev: true
-
-  /io-ts/2.2.18_fp-ts@2.12.3:
-    resolution: {integrity: sha512-3JxUUzRtPQPs5sOwB7pW0+Xb54nOzqA6M1sRB1hwgsRmkWMeGTjtOrCynGTJhIj+mBLUj2S37DAq2+BrPh9kTQ==}
-    peerDependencies:
-      fp-ts: ^2.5.0
-    dependencies:
-      fp-ts: 2.12.3
-    dev: false
 
   /is-core-module/2.10.0:
     resolution: {integrity: sha512-Erxj2n/LDAZ7H8WNJXd9tw38GYM3dv8rk8Zcs+jJuxYTW7sozH+SS8NtrSjVL1/vpLvWi1hxy96IzjJ3EHTJJg==}
