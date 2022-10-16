@@ -4,7 +4,7 @@ import { Dirent } from "fs";
 import * as fs from "fs/promises";
 
 import { ARR, FN, OP, TE } from "../fp.js";
-import { AppTaskEither } from "../index.js";
+import { AppEither, AppTaskEither } from "../index.js";
 import {
   parseManifestString,
   parsePnpmWsYaml,
@@ -96,6 +96,7 @@ export const transformFile = (
     TE.chain(({ contentT }) => writeFile(to)(contentT))
   );
 
+export const copyFile = (
   { path: from }: AbsPath,
   { path: to }: AbsPath
 ): AppTaskEither<void> => TE.tryCatch(() => fs.copyFile(from, to), matchError);
