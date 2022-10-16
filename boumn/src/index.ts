@@ -18,7 +18,7 @@ import {
   PackageData,
 } from "./getWsInfo.js";
 
-export const main = FN.pipe(
+const main = FN.pipe(
   TE.Do,
   TE.bind("config", () => TE.fromIOEither(getCliOption())),
   TE.bind("cwd", () => TE.fromIO(getCwd)),
@@ -94,3 +94,11 @@ export const main = FN.pipe(
     )
   )
 );
+
+await main().then((res) => {
+  if (res._tag === "Right") {
+    console.log("Bundle success!");
+    return;
+  }
+  throw res.left;
+});
