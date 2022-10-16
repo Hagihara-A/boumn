@@ -1,6 +1,6 @@
 import { ARR, E, EQ, FN, REC, SET, STR, TE } from "./fp.js";
 import { glob, readManifest, readPnpmWsYaml } from "./fs/fs.js";
-import { AppTaskEither } from "./index.js";
+import { AppEither, AppTaskEither } from "./index.js";
 import { RawManifest } from "./parser/main.js";
 import {
   AbsPath,
@@ -72,6 +72,36 @@ export const getPackageData = (
     )
   );
 
+type PackageDataGroup = {
+  target: PackageData;
+  others: PackageData[];
+};
+
+export const groupPackageData =
+  (eq: EQ.Eq<PackageData["name"]>) =>
+  (targetName: PackageData["name"]) =>
+  (packageDataList: PackageData[]): AppEither<PackageDataGroup> => {
+    return FN.pipe(
+      E.Do,
+      E.bind("target", () =>
+        E.fromOption(
+          () => new Error(`No package named "${targetName}" found from list`)
+        )(
+          ARR.findFirst((pkg: PackageData) => eq.equals(targetName, pkg.name))(
+            packageDataList
+          )
+        )
+      ),
+      E.bind("others", ({ target }) =>
+        E.of(
+          ARR.filter((pkg: PackageData) => !eq.equals(pkg.name, target.name))(
+            packageDataList
+          )
+        )
+      )
+    );
+  };
+
 export const defaultIncludeFiles = [
   manifestFileName,
   "[rR][eE][aA][dD][mM][eE]*", // readme
@@ -93,7 +123,7 @@ const derivePackageData = (
   path: pkgDir,
 });
 
-const isWsProtocol = (str: string) => /^workspace:.+$/.test(str);
+export const isWsProtocol = (str: string) => /^workspace:.+$/.test(str);
 
 export const eqPkg: EQ.Eq<PackageData> = EQ.contramap(
   (pkg: PackageData) => pkg.name
