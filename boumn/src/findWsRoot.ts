@@ -2,12 +2,7 @@ import { ARR, FN, OP, TE } from "./fp.js";
 import { readFilesInDir, tryReadManifest } from "./fs/fs.js";
 import { AppTaskEither } from "./index.js";
 import { RawManifest } from "./parser/main.js";
-import {
-  AbsPath,
-  isPnpmWsYamlPath,
-  isRootDir,
-  parentDir,
-} from "./path.js";
+import { AbsPath, isPnpmWsYamlPath, isRootDir, parentDir } from "./path.js";
 
 type PMType = "pnpm" | "yarn";
 type NotRoot = "notRoot";
