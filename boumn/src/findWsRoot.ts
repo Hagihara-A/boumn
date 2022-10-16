@@ -1,8 +1,7 @@
-import { ARR, FN, OP, TE } from "./fp.js";
-import { readFilesInDir, tryReadManifest } from "./fs/fs.js";
-import { AppTaskEither } from "./index.js";
-import { RawManifest } from "./parser/main.js";
-import { AbsPath, isPnpmWsYamlPath, isRootDir, parentDir } from "./path.js";
+import { AppTaskEither, ARR, FN, OP, TE } from "fp";
+import { readFilesInDir, tryReadManifest } from "fp-fs";
+import { RawManifest } from "fp-parse";
+import { AbsPath, isPnpmWsYamlPath, isRootDir, parentDir } from "fp-path";
 
 type PMType = "pnpm" | "yarn";
 type NotRoot = "notRoot";

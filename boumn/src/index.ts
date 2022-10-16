@@ -1,88 +1,96 @@
-import { Errors } from "error";
+import { ARR, E, FN, mapRecordWithKey, STR, TE } from "fp";
+import { copyFilesRecursive, glob } from "fp-fs";
+import { parseManifestString } from "fp-parse";
+import { AbsPath, concatPath, getCwd, manifestFileName } from "fp-path";
 import * as pathM from "path";
 
+import { getCliOption } from "./cli/main.js";
 import { findWsRoot } from "./findWsRoot.js";
-import { ARR, E, FN, TE } from "./fp.js";
-import { glob } from "./fs/fs.js";
 import {
   enumDependentPkgs,
+  eqPkg,
   getAllWsPkgPaths,
   getPackageData,
   getPnpmWsGlob,
   getYarnWsGlob,
-  ordPkg,
+  groupPackageData,
+  isWsProtocol,
   PackageData,
 } from "./getWsInfo.js";
-import { AbsPath, getCwd, manifestFileName } from "./path.js";
-
-type Config = {
-  targetName: string;
-  destDir: AbsPath;
-  cwd: AbsPath;
-};
-
-export type AppEither<T> = E.Either<Errors, T>;
-export type AppTaskEither<T> = TE.TaskEither<Errors, T>;
-
-const config: Config = {
-  destDir: { __tag: "absPath", path: "/home/arark/boumn/bundle" },
-  targetName: "boumn",
-};
 
 export const main = FN.pipe(
   TE.Do,
-  TE.bind("cwd", () => (console.log("cwd"), TE.fromIO(getCwd))),
-  TE.bind("wsRoot", ({ cwd }) => (console.log("wsRoot"), findWsRoot(cwd))),
-  TE.bind(
-    "wsGlob",
-    ({ wsRoot: { type, path } }) => (
-      console.log("wsGlob"),
-      type === "pnpm" ? getPnpmWsGlob(path) : getYarnWsGlob(path)
+  TE.bind("config", () => TE.fromIOEither(getCliOption())),
+  TE.bind("cwd", () => TE.fromIO(getCwd)),
+  TE.bind("wsRoot", ({ cwd }) => findWsRoot(cwd)),
+  TE.bind("wsGlob", ({ wsRoot: { type, path } }) =>
+    type === "pnpm" ? getPnpmWsGlob(path) : getYarnWsGlob(path)
+  ),
+  TE.bind("wsManifestPaths", ({ wsGlob, wsRoot }) =>
+    getAllWsPkgPaths(
+      wsRoot.path,
+      ARR.map((pat: string) => pathM.join(pat, manifestFileName))(wsGlob)
     )
   ),
-  TE.bind(
-    "wsManifestPaths",
-    ({ wsGlob, wsRoot }) => (
-      console.log("wsManifestPaths"),
-      getAllWsPkgPaths(
-        wsRoot.path,
-        ARR.map((pat: string) => pathM.join(pat, manifestFileName))(wsGlob)
-      )
-    )
-  ),
-
   TE.bind("packageDataList", ({ wsManifestPaths }) =>
-    TE.traverseArray((manPath: AbsPath) => getPackageData(manPath))(
-      wsManifestPaths
+    TE.traverseArray((manPath: AbsPath) =>
+      FN.pipe(
+        TE.Do,
+        TE.bind("packageData", () => getPackageData(manPath)),
+        TE.bind("allPackageFiles", ({ packageData: { files, path } }) =>
+          glob(path, files)
+        ),
+        TE.map(({ packageData, allPackageFiles }) => ({
+          ...packageData,
+          files: allPackageFiles,
+        }))
+      )
+    )(wsManifestPaths)
+  ),
+  TE.bind("packageGroup", ({ config: { targetName }, packageDataList }) =>
+    TE.fromEither(
+      groupPackageData(STR.Eq)(targetName)(packageDataList as PackageData[])
     )
   ),
-  TE.bind("dependentPackageDataList", () => enumDependentPkgs(ordPkg)()),
-  TE.bind("packageDataWithAllFiles", ({ packageDataList }) =>
-    TE.traverseArray((packageData: PackageData) =>
-      FN.pipe(
-        glob(packageData.path, packageData.files),
-        TE.map((files) => ({ ...packageData, files }))
-      )
-    )(packageDataList)
+  TE.bind("dependentPackageData", ({ packageGroup: { others, target } }) =>
+    TE.right(enumDependentPkgs(eqPkg)(others)(target))
   ),
-  (res) => {
-    res()
-      .then((b) => {
-        if (b._tag === "Right") {
-          const a = b.right;
-          const log = (a: unknown, b: unknown) => console.log(a, b, "\n");
-
-          log("cwd", a.cwd);
-          log("wsRoot", a.wsRoot);
-          log("wsGlob", a.wsGlob);
-          log("wsManifestPaths", a.wsManifestPaths);
-          log("packageDataList", a.packageDataList);
-          log("packageDataWithAllFiles", a.packageDataWithAllFiles);
-        }
-        console.log(b);
-      })
-      .catch(console.log);
-
-    return TE.right(1);
-  }
+  TE.bind("_", ({ dependentPackageData, config: { destDir } }) =>
+    TE.traverseArray((pkgData: PackageData) =>
+      copyFilesRecursive(pkgData.path)(concatPath(destDir, pkgData.name))(
+        pkgData.files
+      )(
+        FN.flow(
+          parseManifestString,
+          E.map((rawMan) => ({
+            ...rawMan,
+            dependencies: FN.pipe(rawMan.dependencies ?? {}, (deps) =>
+              mapRecordWithKey(deps)((name, ref) => [
+                name,
+                isWsProtocol(ref) ? `file:../${name}` : ref,
+              ])
+            ),
+          })),
+          E.map((man) => JSON.stringify(man, null, 2))
+        )
+      )
+    )(dependentPackageData)
+  ),
+  TE.bind("__", ({ config: { destDir }, packageGroup: { target } }) =>
+    copyFilesRecursive(target.path)(destDir)(target.files)(
+      FN.flow(
+        parseManifestString,
+        E.map((rawMan) => ({
+          ...rawMan,
+          dependencies: FN.pipe(rawMan.dependencies ?? {}, (deps) =>
+            mapRecordWithKey(deps)((name, ref) => [
+              name,
+              isWsProtocol(ref) ? `file:./${name}` : ref,
+            ])
+          ),
+        })),
+        E.map((man) => JSON.stringify(man, null, 2))
+      )
+    )
+  )
 );

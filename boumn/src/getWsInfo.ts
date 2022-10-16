@@ -1,7 +1,17 @@
-import { ARR, E, EQ, FN, REC, SET, STR, TE } from "./fp.js";
-import { glob, readManifest, readPnpmWsYaml } from "./fs/fs.js";
-import { AppEither, AppTaskEither } from "./index.js";
-import { RawManifest } from "./parser/main.js";
+import {
+  AppEither,
+  AppTaskEither,
+  ARR,
+  E,
+  EQ,
+  FN,
+  REC,
+  SET,
+  STR,
+  TE,
+} from "fp";
+import { glob, readManifest, readPnpmWsYaml } from "fp-fs";
+import { RawManifest } from "fp-parse";
 import {
   AbsPath,
   concatPath,
@@ -9,7 +19,7 @@ import {
   manifestPath,
   parentDir,
   pnpmWsYamlPath,
-} from "./path.js";
+} from "fp-path";
 
 export const getYarnWsGlob = (wsRootDir: AbsPath): AppTaskEither<WsGlob> =>
   FN.pipe(
