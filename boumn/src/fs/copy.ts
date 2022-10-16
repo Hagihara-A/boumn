@@ -1,39 +1,30 @@
-import { FN, TE } from "../fp.js";
+import {  E, FN, TE } from "../fp.js";
 import { AppTaskEither } from "../index.js";
-import { RawManifest } from "../parser/main.js";
-import { AbsPath, concatPath, isManifestPath } from "../path.js";
-import { copy, glob, readManifest, writeFile } from "./fs.js";
-
-type TransformManifest = (m: RawManifest) => Record<string, unknown>;
+import { AbsPath, concatPath, isManifestPath, parentDir } from "../path.js";
+import { ensureDir, Transform, transformFile } from "./fs.js";
 
 /**
- * Copy all files which match `patterns` under `from` to `to`.
- * If file if package.json, content is modified by transformManifest
+ * Copy files which are under `src` and match `rpaths` into `dest`.
+ * package.json is modified using `transformManifest`.
  */
 export const copyFilesRecursive =
-  (from: AbsPath) =>
-  (to: AbsPath) =>
-  (patterns: string[]) =>
-  (transformManifest: TransformManifest): AppTaskEither<void> =>
+  (src: AbsPath) =>
+  (dest: AbsPath) =>
+  (rpaths: string[]) =>
+  (transformManifest: Transform): AppTaskEither<void> =>
     FN.pipe(
-      glob(from, patterns),
-      TE.chain(
-        TE.traverseArray((rpath: string) =>
-          isManifestPath(rpath)
-            ? copyManifestWithTransform(from)(to)(transformManifest)
-            : copy(concatPath(from, rpath), concatPath(to, rpath))
-        )
-      ),
-      TE.map((): void => void 0)
-    );
+      rpaths,
+      TE.traverseArray((rpath: string) => {
+        const transformer = isManifestPath(rpath)
+          ? transformManifest
+          : (a: string) => E.right(a);
+        const from = concatPath(src, rpath);
+        const to = concatPath(dest, rpath);
 
-const copyManifestWithTransform =
-  (manifestFrom: AbsPath) =>
-  (manifestTo: AbsPath) =>
-  (transform: TransformManifest): AppTaskEither<void> =>
-    FN.pipe(
-      readManifest(manifestFrom),
-      TE.map(transform),
-      TE.map((obj) => JSON.stringify(obj, null, 2)),
-      TE.chain(writeFile(manifestTo))
+        return FN.pipe(
+          ensureDir(parentDir(to)),
+          TE.chain(() => transformFile(from, to, transformer))
+        );
+      }),
+      TE.map((): void => void 0)
     );
