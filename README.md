@@ -1,31 +1,16 @@
-バンドル対象pkgの名前、バンドル出力ディレクトリをもらう
-cwd取得
-ディレクトリがwsのrootか調べる -> ファイル一覧取得 -> pnpm-workspace.yamlが存在するか、package.jsonにworkspacesプロパティが存在するならroot
-違うなら一個上でやり直し。
-ルートディレクトリでも見つからなかったらエラー
+# boumn
+boumn is the __bundler for monorepo__.
 
-ルートのpackage.jsonを読み込み
-(pnpmなら)pnpm-workspace.yamlを読み込み
-ワークスペースの対象globを取得
+boumn bundles packages in your monorepo and rewrite `package.json#dependencies` such as  `workspace:*` into `file:./pkg-name`, so that npm can interpret them correctly.
 
-ws指定globにpackage.jsonを繋げて、ワークスペースパッケージのマニフェストのパスを取得。
-それらを全部読み込む。name, dependencies, filesが必要。パッケージのパスも合わせて持っておく。
+boumn is especially useful for bundling a nodejs apps in private monorepo for deploying some services like `firebase functions`. If you adopt monorepo strategy in your private repository, you have to publish packages in monorepo to private registory so that the platform you deployed can find them. You can avoid such complexity using boumn. boumn can bundle packages in monorepo so that the platform can find them locally(not in private registory). boumn is originally developed for `firebase functions`, but is not limited to.
 
-バンドル対象pkgの依存を全部たどって依存パッケージのパスとそのマニフェストを列挙する。
+If your monorepo repository is public, don't use boumn. Just publish packages publicly.
 
-まずルートパッケージのバンドル対象ファイルをdestDirにコピー
-package.jsonなら`"name": "file:./pkgname"`に書き換える
+# Getting started
+`npm i boumn`
 
-destDirにバンドル対象パッケージのデプロイファイルをコピー
-destDir/${packagename}に依存パッケージのデプロイファイルをコピー
-デプロイファイルを書き込むとき、dependenciesの　`"pkgName": "workspace:*"`を `"name": "file:../pkgname"`に書き換える
+`npx boumn --out=out --target=my-pkg`
 
-デプロイファイルとは
-
-```
-files 
-package.json
-README
-LICENSE / LICENCE
-mainのファイル
-```
+This command says like this.
+> Hey boumn! Bundle all dependencies referenced in the package named `my-pkg` and outout standalone package into `./out` dirctory! But wait, I don't want to bundle packages not in monorepo like `lodash` or `date-fns`. I will find them in public registry. I just want you to bundle __packages in monorepo__, like packages named `my-company-secret-utils` and `my-company-secret-logic`.
