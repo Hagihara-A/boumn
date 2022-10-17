@@ -18,6 +18,8 @@ import {
   PackageData,
 } from "./getWsInfo.js";
 
+const bundleDirName = "_internal";
+
 const main = FN.pipe(
   TE.Do,
   TE.bind("config", () => TE.fromIOEither(getCliOption())),
@@ -57,9 +59,9 @@ const main = FN.pipe(
   ),
   TE.bind("_", ({ dependentPackageData, config: { destDir } }) =>
     TE.traverseArray((pkgData: PackageData) =>
-      copyFilesRecursive(pkgData.path)(concatPath(destDir, pkgData.name))(
-        pkgData.files
-      )(
+      copyFilesRecursive(pkgData.path)(
+        concatPath(concatPath(destDir, bundleDirName), pkgData.name)
+      )(pkgData.files)(
         FN.flow(
           parseManifestString,
           E.map((rawMan) => ({
@@ -80,12 +82,16 @@ const main = FN.pipe(
     copyFilesRecursive(target.path)(destDir)(target.files)(
       FN.flow(
         parseManifestString,
+        E.map((man) => ({
+          ...man,
+          files: [...(man.files ?? []), `./${bundleDirName}/**/*`],
+        })),
         E.map((rawMan) => ({
           ...rawMan,
           dependencies: FN.pipe(rawMan.dependencies ?? {}, (deps) =>
             mapRecordWithKey(deps)((name, ref) => [
               name,
-              isWsProtocol(ref) ? `file:./${name}` : ref,
+              isWsProtocol(ref) ? `file:./${bundleDirName}/${name}` : ref,
             ])
           ),
         })),
