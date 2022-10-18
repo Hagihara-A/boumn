@@ -1,14 +1,18 @@
 {
   "name": "boumn",
   "version": "0.1.0",
-  "description": "",
+  "description": "Bundler for private monorepo repositories",
+  "keywords": [
+    "bundler",
+    "monorepo"
+  ],
   "main": "build/index.js",
   "type": "module",
   "scripts": {
     "build": "tsc",
     "test": "vitest run"
   },
-  "author": "",
+  "author": "arark",
   "license": "MIT",
   "devDependencies": {
     "@types/micromatch": "^4.0.2",
